@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anna University CGPA Calculator</title>
+    <!-- Google Fonts for modern typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <!-- html2pdf.js Bundle CDN for Client-Side PDF Generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Toast Notification Banner -->
+        <div id="toast-notification" class="toast-notification hidden" role="status" aria-live="polite">
+            <span id="toast-message" class="toast-message"></span>
+        </div>
+
+        <!-- Header Branding -->
+        <header class="app-header">
+            <h1 class="app-title">CGPA CALCULATOR</h1>
+            <p class="app-subtitle">Anna University &bull; R2025</p>
+        </header>
+
+        <main class="app-main">
+            <!-- Screen 1: Student Details Form -->
+            <section id="student-details-screen" class="card-screen active" aria-labelledby="student-details-title">
+                <div class="card-header">
+                    <h2 id="student-details-title" class="card-title">Student Details</h2>
+                </div>
+
+                <form id="student-form" novalidate>
+                    <!-- Register Number -->
+                    <div class="form-group">
+                        <label for="reg-number" class="form-label">Register Number</label>
+                        <input 
+                            type="text" 
+                            id="reg-number" 
+                            name="regNumber" 
+                            class="form-input" 
+                            placeholder="Enter your register number"
+                            autocomplete="off"
+                            required
+                        >
+                        <span id="reg-number-error" class="error-message" aria-live="polite"></span>
+                    </div>
+
+                    <!-- Student Name -->
+                    <div class="form-group">
+                        <label for="student-name" class="form-label">Name</label>
+                        <input 
+                            type="text" 
+                            id="student-name" 
+                            name="studentName" 
+                            class="form-input" 
+                            placeholder="Enter your name"
+                            autocomplete="name"
+                            required
+                        >
+                        <span id="student-name-error" class="error-message" aria-live="polite"></span>
+                    </div>
+
+                    <!-- Previous CGPA -->
+                    <div class="form-group">
+                        <label for="prev-cgpa" class="form-label">Previous CGPA</label>
+                        <input 
+                            type="number" 
+                            id="prev-cgpa" 
+                            name="prevCgpa" 
+                            class="form-input" 
+                            placeholder="Enter previous CGPA"
+                            min="0"
+                            max="10"
+                            step="0.01"
+                            inputmode="decimal"
+                            required
+                        >
+                        <span id="prev-cgpa-error" class="error-message" aria-live="polite"></span>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" id="btn-continue" class="btn btn-primary">
+                        <span>Continue</span>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                    </button>
+                </form>
+            </section>
+
+            <!-- Screen 2: Subject Selection Screen -->
+            <section id="subject-selection-screen" class="card-screen hidden" aria-labelledby="subject-selection-title">
+                <div class="card-header">
+                    <div class="header-flex">
+                        <h2 id="subject-selection-title" class="card-title">Subject Selection</h2>
+                        <span class="sem-tag">1st Year &bull; Semester 2</span>
+                    </div>
+                </div>
+
+                <!-- Display submitted student summary badge -->
+                <div id="student-summary-badge" class="summary-badge">
+                    <div class="summary-info">
+                        <span id="summary-name" class="summary-name"></span>
+                        <span id="summary-reg" class="summary-reg"></span>
+                    </div>
+                    <div class="summary-cgpa-pill">
+                        <span>Prev CGPA: </span>
+                        <strong id="summary-cgpa"></strong>
+                    </div>
+                </div>
+
+                <!-- Banner error message if calculation blocked -->
+                <div id="calc-error-message" class="alert-banner hidden" role="alert">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    <span>Please select a grade for all subjects before calculating.</span>
+                </div>
+
+                <!-- Dynamic Subjects Container -->
+                <div id="subjects-container" class="subjects-list"></div>
+
+                <!-- Calculate CGPA Button -->
+                <button type="button" id="btn-calculate" class="btn btn-primary">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect>
+                        <line x1="8" y1="6" x2="16" y2="6"></line>
+                        <line x1="16" y1="14" x2="16" y2="18"></line>
+                        <path d="M16 10h.01"></path>
+                        <path d="M12 10h.01"></path>
+                        <path d="M8 10h.01"></path>
+                        <path d="M12 14h.01"></path>
+                        <path d="M8 14h.01"></path>
+                        <path d="M12 18h.01"></path>
+                        <path d="M8 18h.01"></path>
+                    </svg>
+                    <span>Calculate CGPA</span>
+                </button>
+
+                <button type="button" id="btn-back" class="btn btn-secondary">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                    <span>Edit Student Details</span>
+                </button>
+            </section>
+
+            <!-- Screen 3: Results Display Screen -->
+            <section id="result-screen" class="card-screen hidden" aria-labelledby="result-title">
+                <div class="card-header">
+                    <h2 id="result-title" class="card-title">Calculation Results</h2>
+                </div>
+
+                <!-- Result Badge Header -->
+                <div class="summary-badge">
+                    <div class="summary-info">
+                        <span id="result-student-name" class="summary-name"></span>
+                        <span id="result-student-reg" class="summary-reg"></span>
+                    </div>
+                </div>
+
+                <!-- Results Score Cards -->
+                <div class="results-grid">
+                    <div class="result-card result-card-sgpa">
+                        <span class="result-label">YOUR SGPA</span>
+                        <div id="display-sgpa" class="result-value">0.00</div>
+                        <span class="result-sub">Semester 2 (28 Credits)</span>
+                    </div>
+
+                    <div class="result-card result-card-cgpa">
+                        <span class="result-label">YOUR CGPA</span>
+                        <div id="display-cgpa" class="result-value glowing">0.00</div>
+                        <span class="result-sub">Overall (51 Total Credits)</span>
+                    </div>
+                </div>
+
+                <!-- Additional Stats -->
+                <div class="stats-row">
+                    <div class="stat-item">
+                        <span class="stat-label">Total Credits</span>
+                        <span class="stat-value">28</span>
+                    </div>
+                    <div class="stat-divider"></div>
+                    <div class="stat-item">
+                        <span class="stat-label">Total Credit Points</span>
+                        <span id="display-credit-points" class="stat-value">0</span>
+                    </div>
+                </div>
+
+                <!-- Motivational Comment Card -->
+                <div class="motivation-card">
+                    <div class="motivation-header">
+                        <span class="motivation-badge">Performance Feedback</span>
+                    </div>
+                    <p id="display-motivation" class="motivation-text"></p>
+                </div>
+
+                <!-- Batch 3: Calculation Breakdown Section ("How was this calculated?") -->
+                <div class="breakdown-container">
+                    <h3 class="breakdown-main-title">How was this calculated?</h3>
+
+                    <!-- Step 1: Subject-Wise Calculation -->
+                    <div class="breakdown-card">
+                        <h4 class="breakdown-step-title">1. Subject Calculations</h4>
+                        <p class="breakdown-desc">Credit &times; Grade Point for each subject:</p>
+                        <div id="breakdown-subject-list" class="breakdown-subject-list"></div>
+                    </div>
+
+                    <!-- Step 2: Total Credit Points -->
+                    <div class="breakdown-card">
+                        <h4 class="breakdown-step-title">2. Total Credit Points</h4>
+                        <div class="breakdown-row">
+                            <span class="breakdown-row-label">Total Credits:</span>
+                            <strong class="breakdown-row-val">28</strong>
+                        </div>
+                        <div class="breakdown-math-box">
+                            <span class="math-label">Points Sum:</span>
+                            <div id="breakdown-sum-expression" class="math-expr"></div>
+                            <div class="math-result">Total Points = <strong id="breakdown-total-points-val">0</strong></div>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: SGPA Calculation -->
+                    <div class="breakdown-card">
+                        <h4 class="breakdown-step-title">3. SGPA Calculation</h4>
+                        <div class="formula-box">
+                            <div class="formula-title">SGPA Formula</div>
+                            <div class="formula-text">SGPA = Total Credit Points &divide; Total Credits</div>
+                        </div>
+                        <div class="step-calculation">
+                            <div id="sgpa-step-sub" class="calc-step-line"></div>
+                            <div id="sgpa-step-raw" class="calc-step-line"></div>
+                            <div id="sgpa-step-final" class="calc-step-highlight"></div>
+                        </div>
+                    </div>
+
+                    <!-- Step 4: Overall CGPA Calculation -->
+                    <div class="breakdown-card">
+                        <h4 class="breakdown-step-title">4. Overall CGPA Calculation</h4>
+                        <div class="formula-box">
+                            <div class="formula-title">CGPA Formula</div>
+                            <div class="formula-text">CGPA = ((Prev CGPA &times; 23) + (Current SGPA &times; 28)) &divide; 51</div>
+                        </div>
+                        <div class="step-calculation">
+                            <div id="cgpa-step-input" class="calc-step-line"></div>
+                            <div id="cgpa-step-expanded" class="calc-step-line"></div>
+                            <div id="cgpa-step-sum" class="calc-step-line"></div>
+                            <div id="cgpa-step-div" class="calc-step-line"></div>
+                            <div id="cgpa-step-raw" class="calc-step-line"></div>
+                            <div id="cgpa-step-final" class="calc-step-highlight"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Result Actions Order (Batch 5 Integration) -->
+                <div class="result-actions">
+                    <button type="button" id="btn-download-pdf" class="btn btn-pdf">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                        <span>Download PDF</span>
+                    </button>
+
+                    <button type="button" id="btn-back-edit" class="btn btn-secondary">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M1 4v6h6"></path>
+                            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+                        </svg>
+                        <span>Back to Edit</span>
+                    </button>
+                    
+                    <button type="button" id="btn-start-over" class="btn btn-outline">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="1 4 1 10 7 10"></polyline>
+                            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+                        </svg>
+                        <span>Start Over</span>
+                    </button>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <p>Designed and Developed by <strong>Varunkumar R</strong></p>
+        </footer>
+    </div>
+
+    <!-- Start Over Confirmation Modal -->
+    <div id="start-over-modal" class="modal-backdrop hidden" aria-hidden="true" role="dialog" aria-labelledby="modal-title">
+        <div class="modal-card">
+            <h3 id="modal-title" class="modal-title">Start Over?</h3>
+            <p class="modal-text">Start over and clear your current result?</p>
+            <div class="modal-actions">
+                <button type="button" id="btn-modal-cancel" class="btn btn-secondary btn-modal">Cancel</button>
+                <button type="button" id="btn-modal-confirm" class="btn btn-danger btn-modal">Start Over</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Batch 4: Hidden Printable PDF Template -->
+    <div class="pdf-template-wrapper">
+        <div id="pdf-template" class="pdf-document">
+            <!-- PDF Header -->
+            <div class="pdf-header">
+                <h1 class="pdf-brand-title">CGPA CALCULATOR</h1>
+                <p class="pdf-brand-subtitle">Anna University &bull; R2025</p>
+                <div class="pdf-tag">AI&DS &mdash; 1st Year &bull; Semester 2 Report</div>
+            </div>
+
+            <!-- Student Info Section -->
+            <div class="pdf-section">
+                <h2 class="pdf-section-title">Student Details</h2>
+                <table class="pdf-info-table">
+                    <tr>
+                        <td class="pdf-info-label">Register Number:</td>
+                        <td id="pdf-reg" class="pdf-info-val"></td>
+                        <td class="pdf-info-label">Name:</td>
+                        <td id="pdf-name" class="pdf-info-val"></td>
+                    </tr>
+                    <tr>
+                        <td class="pdf-info-label">Previous CGPA:</td>
+                        <td id="pdf-prev-cgpa" class="pdf-info-val"></td>
+                        <td class="pdf-info-label">Configured Credits:</td>
+                        <td class="pdf-info-val">Sem 1: 23 Cr | Sem 2: 28 Cr</td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- Result Summary Box -->
+            <div class="pdf-section">
+                <h2 class="pdf-section-title">Final Result Summary</h2>
+                <div class="pdf-results-box">
+                    <div class="pdf-result-card">
+                        <span class="pdf-res-label">SEMESTER 2 SGPA</span>
+                        <div id="pdf-sgpa" class="pdf-res-val">0.00</div>
+                        <span class="pdf-res-sub">28 Credits</span>
+                    </div>
+                    <div class="pdf-result-card pdf-card-accent">
+                        <span class="pdf-res-label">OVERALL CGPA</span>
+                        <div id="pdf-cgpa" class="pdf-res-val">0.00</div>
+                        <span class="pdf-res-sub">51 Total Credits</span>
+                    </div>
+                    <div class="pdf-result-card">
+                        <span class="pdf-res-label">TOTAL CREDIT POINTS</span>
+                        <div id="pdf-total-points" class="pdf-res-val">0</div>
+                        <span class="pdf-res-sub">Sem 2 Points</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Subject-wise Table -->
+            <div class="pdf-section">
+                <h2 class="pdf-section-title">Subject-wise Grade Details</h2>
+                <table class="pdf-subject-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Subject Code</th>
+                            <th>Credits</th>
+                            <th>Grade</th>
+                            <th>Grade Point</th>
+                            <th>Credit &times; Grade Point</th>
+                        </tr>
+                    </thead>
+                    <tbody id="pdf-subject-rows"></tbody>
+                </table>
+            </div>
+
+            <!-- Calculation Breakdown -->
+            <div class="pdf-section page-break-inside-avoid">
+                <h2 class="pdf-section-title">Detailed Calculation Breakdown</h2>
+                
+                <div class="pdf-calc-box">
+                    <h3 class="pdf-calc-subtitle">1. Total Credit Points Calculation</h3>
+                    <p id="pdf-points-expr" class="pdf-math-expr"></p>
+                </div>
+
+                <div class="pdf-calc-box">
+                    <h3 class="pdf-calc-subtitle">2. Semester 2 SGPA Calculation</h3>
+                    <p class="pdf-formula">SGPA = Total Credit Points &divide; 28</p>
+                    <p id="pdf-sgpa-steps" class="pdf-calc-steps"></p>
+                </div>
+
+                <div class="pdf-calc-box">
+                    <h3 class="pdf-calc-subtitle">3. Overall CGPA Calculation</h3>
+                    <p class="pdf-formula">CGPA = ((Previous CGPA &times; 23) + (Current SGPA &times; 28)) &divide; 51</p>
+                    <p id="pdf-cgpa-steps" class="pdf-calc-steps"></p>
+                </div>
+            </div>
+
+            <!-- Motivational Comment -->
+            <div class="pdf-section page-break-inside-avoid">
+                <h2 class="pdf-section-title">Performance Feedback</h2>
+                <div class="pdf-motivation-box">
+                    <p id="pdf-motivation" class="pdf-motivation-text"></p>
+                </div>
+            </div>
+
+            <!-- PDF Footer -->
+            <div class="pdf-footer">
+                <p>Official Academic Calculation Report &bull; Anna University R2025</p>
+                <p>Designed and Developed by <strong>Varunkumar R</strong></p>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
